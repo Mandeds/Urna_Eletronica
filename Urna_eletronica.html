@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Urna Eletrônica – Simulador</title>
+
+  <style>
+    :root {
+      --bg: #e9ecef;
+      --fg: #1b1f24;
+      --muted: #5c6670;
+      --card: #fff;
+      --line: #c9d0d6;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      color-scheme: light;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #14171a;
+        --fg: #eceff1;
+        --muted: #98a2ab;
+        --card: #22272c;
+        --line: #363d44;
+        color-scheme: dark;
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #14171a;
+      --fg: #eceff1;
+      --muted: #98a2ab;
+      --card: #22272c;
+      --line: #363d44;
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+    }
+
+    header {
+      width: 100%;
+      max-width: 940px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    header p {
+      margin: 2px 0 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .btn-top {
+      background: var(--card);
+      color: var(--fg);
+      border: 1px solid var(--line);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-top:hover {
+      border-color: #2f7d4f;
+    }
+
+    /* ===== Urna ===== */
+    .urna {
+      width: 100%;
+      max-width: 940px;
+      background: #d8d8d4;
+      border-radius: 18px;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 1fr 290px;
+      gap: 22px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .3);
+      border: 3px solid #b9b9b3;
+    }
+
+    .tela {
+      background: #f4f4ef;
+      border: 6px solid #3a3a3a;
+      border-radius: 6px;
+      min-height: 430px;
+      padding: 18px 22px;
+      color: #111;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tela .cargo {
+      font-size: 13px;
+      letter-spacing: .5px;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .tela h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .digitos {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0 16px;
+    }
+
+    .d {
+      width: 46px;
+      height: 56px;
+      border: 2px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      font-weight: 700;
+      background: #fff;
+    }
+
+    .d.cur {
+      animation: b 1s steps(1) infinite;
+    }
+
+    @keyframes b {
+      50% {
+        background: #fde68a;
+      }
+    }
+
+    .info {
+      display: flex;
+      gap: 18px;
+      align-items: flex-start;
+      font-size: 17px;
+      line-height: 1.7;
+    }
+
+    .info b {
+      display: inline-block;
+      min-width: 80px;
+    }
+
+    .foto {
+      width: 110px;
+      height: 140px;
+      border: 2px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 44px;
+      font-weight: 700;
+      color: #fff;
+      flex: none;
+    }
+
+    .aviso {
+      margin-top: auto;
+      border-top: 2px solid #222;
+      padding-top: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .grande {
+      font-size: 26px;
+      font-weight: 700;
+      margin: 6px 0;
+    }
+
+    .nulo {
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+
+    .fim {
+      margin: auto;
+      text-align: center;
+    }
+
+    .fim .f {
+      font-size: 96px;
+      font-weight: 800;
+      letter-spacing: 6px;
+    }
+
+    .fim .v {
+      font-size: 22px;
+    }
+
+    /* ===== Teclado ===== */
+    .teclado {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .marca {
+      background: #2b2b2b;
+      color: #f0f0f0;
+      text-align: center;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+
+    .num {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .k {
+      background: #2a2a2a;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      height: 58px;
+      font-size: 26px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 3px 0 #000;
+    }
+
+    .k:active {
+      transform: translateY(3px);
+      box-shadow: none;
+    }
+
+    .k.z {
+      grid-column: 2;
+    }
+
+    .acoes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .a {
+      border: none;
+      border-radius: 6px;
+      height: 66px;
+      font-weight: 800;
+      font-size: 12px;
+      cursor: pointer;
+      box-shadow: 0 3px 0 rgba(0, 0, 0, .4);
+    }
+
+    .a:active {
+      transform: translateY(3px);
+      box-shadow: none;
+    }
+
+    .br {
+      background: #fff;
+      color: #111;
+    }
+
+    .co {
+      background: #ee7a2b;
+      color: #111;
+    }
+
+    .ok {
+      background: #2f9e55;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .dica {
+      width: 100%;
+      max-width: 940px;
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* ===== Painéis (apuração e candidatos) ===== */
+    .ov {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 20;
+    }
+
+    .ov.on {
+      display: flex;
+    }
+
+    .pn {
+      background: var(--card);
+      color: var(--fg);
+      border-radius: 14px;
+      padding: 26px;
+      width: 100%;
+      max-width: 640px;
+      max-height: 90vh;
+      overflow: auto;
+    }
+
+    .pn h2 {
+      margin: 0 0 4px;
+    }
+
+    .pn .sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .lin {
+      margin-bottom: 14px;
+    }
+
+    .lin .t {
+      display: flex;
+      justify-content: space-between;
+      font-size: 15px;
+      margin-bottom: 5px;
+    }
+
+    .bar {
+      height: 14px;
+      background: var(--line);
+      border-radius: 7px;
+      overflow: hidden;
+    }
+
+    .bar i {
+      display: block;
+      height: 100%;
+      border-radius: 7px;
+      transition: width .4s;
+    }
+
+    .rod {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    .rod button {
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      color: var(--fg);
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .rod .perigo {
+      color: #c0392b;
+      border-color: #c0392b;
+    }
+
+    /* ===== Cadastro de candidatos ===== */
+    .ci {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .ci > div {
+      flex: 1;
+    }
+
+    .ci .pt {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .cor {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      flex: none;
+    }
+
+    .ci button {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #c0392b;
+      background: var(--card);
+      color: #c0392b;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .form {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .form input {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 14px;
+      min-width: 0;
+    }
+
+    .form input[type=color] {
+      height: 42px;
+      padding: 2px;
+      width: 100%;
+    }
+
+    .prim {
+      grid-column: 1 / -1;
+      background: #2f9e55;
+      color: #fff;
+      border: none;
+      padding: 11px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .err {
+      color: #c0392b;
+      font-size: 14px;
+      min-height: 20px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 820px) {
+      .urna {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div>
+      <h1>🗳️ Urna Eletrônica – Simulador</h1>
+      <p>Eleição fictícia para Prefeito · candidatos inventados</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-top" id="cfgBtn">⚙️ Candidatos</button>
+      <button class="btn-top" id="verVotos">📊 Ver votos</button>
+    </div>
+  </header>
+
+  <div class="urna">
+    <div class="tela" id="tela"></div>
+
+    <div class="teclado">
+      <div class="marca">URNA ELETRÔNICA</div>
+      <div class="num" id="num"></div>
+      <div class="acoes">
+        <button class="a br" id="bBranco">BRANCO</button>
+        <button class="a co" id="bCorrige">CORRIGE</button>
+        <button class="a ok" id="bConfirma">CONFIRMA</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dica">
+    Use o mouse ou o teclado: números 0–9 · <b>B</b> branco · <b>Backspace</b> corrige · <b>Enter</b> confirma
+  </div>
+
+  <!-- Painel de apuração -->
+  <div class="ov" id="ov">
+    <div class="pn">
+      <h2>Apuração dos votos</h2>
+      <div class="sub" id="total"></div>
+      <div id="lista"></div>
+      <div class="rod">
+        <button class="perigo" id="zerar">Zerar votos</button>
+        <button id="fechar">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Painel de candidatos -->
+  <div class="ov" id="cfg">
+    <div class="pn">
+      <h2>Candidatos</h2>
+      <div class="sub">Adicione ou remova os candidatos da urna.</div>
+      <div id="cl"></div>
+
+      <div class="form">
+        <input id="fn" placeholder="Nº (2 dígitos)" maxlength="2" inputmode="numeric">
+        <input id="fnome" placeholder="Nome do candidato" maxlength="30">
+        <input id="fcor" type="color" value="#2e7bd6" title="Cor da foto">
+        <input id="fpart" placeholder="Partido (opcional)" maxlength="30">
+        <button class="prim" id="add">Adicionar candidato</button>
+      </div>
+
+      <div class="err" id="err"></div>
+
+      <div class="rod">
+        <button class="perigo" id="padrao">Restaurar padrão (zera os votos)</button>
+        <button id="fcfg">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ===== Dados ===== */
+    const PADRAO = [
+      { n: "11", nome: "Marina Costa",  partido: "Partido Horizonte (PH)",    cor: "#2e7bd6" },
+      { n: "22", nome: "Ricardo Alves", partido: "União Cidadã (UC)",         cor: "#d6452e" },
+      { n: "33", nome: "Helena Duarte", partido: "Frente Verde (FV)",         cor: "#2f9e55" },
+      { n: "44", nome: "Paulo Menezes", partido: "Partido do Progresso (PP)", cor: "#8e44ad" }
+    ];
+
+    const KEYC = "urna_cands_v1";
+    let CANDS = PADRAO.map(c => ({ ...c }));
+
+    try {
+      const s = localStorage.getItem(KEYC);
+      if (s) {
+        const a = JSON.parse(s);
+        if (Array.isArray(a)) CANDS = a;
+      }
+    } catch (e) {}
+
+    function salvarC() {
+      try {
+        localStorage.setItem(KEYC, JSON.stringify(CANDS));
+      } catch (e) {}
+    }
+
+    const KEY = "urna_votos_v1";
+    let votos = { branco: 0, nulo: 0 };
+    CANDS.forEach(c => votos[c.n] = 0);
+
+    try {
+      const s = localStorage.getItem(KEY);
+      if (s) {
+        votos = Object.assign(votos, JSON.parse(s));
+      }
+    } catch (e) {}
+
+    function salvar() {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(votos));
+      } catch (e) {}
+    }
+
+    /* ===== Estado da votação ===== */
+    let dig = "";
+    let branco = false;
+    let fim = false;
+    let timer = null;
+    const tela = document.getElementById("tela");
+
+    /* ===== Som ===== */
+    let ctx = null;
+
+    function audio() {
+      if (!ctx) {
+        try {
+          ctx = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {}
+      }
+      if (ctx && ctx.state === "suspended") ctx.resume();
+      return ctx;
+    }
+
+    function bip(freq, dur, vol) {
+      const c = audio();
+      if (!c) return;
+
+      const o = c.createOscillator();
+      const g = c.createGain();
+
+      o.type = "square";
+      o.frequency.value = freq;
+
+      g.gain.setValueAtTime(vol || .12, c.currentTime);
+      g.gain.setTargetAtTime(0.0001, c.currentTime + dur - .03, .01);
+
+      o.connect(g);
+      g.connect(c.destination);
+      o.start();
+      o.stop(c.currentTime + dur);
+    }
+
+    const somTecla = () => bip(1000, .09, .1);
+    const somConfirma = () => bip(900, .8, .14);
+    const somCorrige = () => bip(500, .12, .1);
+
+    /* ===== Tela ===== */
+    function cand() {
+      return CANDS.find(c => c.n === dig);
+    }
+
+    function render() {
+      if (fim) {
+        tela.innerHTML =
+          '<div class="fim"><div class="f">FIM</div><div class="v">VOTOU</div></div>';
+        return;
+      }
+
+      let h = '<div class="cargo">SEU VOTO PARA</div><h2>Prefeito</h2>';
+
+      if (branco) {
+        h += '<div class="grande">VOTO EM BRANCO</div>';
+        h += '<div class="aviso">Aperte a tecla:<br>' +
+             '<b>CONFIRMA</b> para CONFIRMAR este voto<br>' +
+             '<b>CORRIGE</b> para REINICIAR este voto</div>';
+        tela.innerHTML = h;
+        return;
+      }
+
+      h += '<div class="digitos">';
+      for (let i = 0; i < 2; i++) {
+        const cur = i === dig.length ? " cur" : "";
+        h += '<div class="d' + cur + '">' + (dig[i] || "") + '</div>';
+      }
+      h += '</div>';
+
+      if (dig.length === 2) {
+        const c = cand();
+
+        if (c) {
+          const iniciais = c.nome
+            .split(" ")
+            .filter(Boolean)
+            .map(p => p[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase();
+
+          h += '<div class="info">' +
+                 '<div style="flex:1">' +
+                   '<div><b>Nome:</b> ' + c.nome + '</div>' +
+                   '<div><b>Partido:</b> ' + c.partido + '</div>' +
+                 '</div>' +
+                 '<div class="foto" style="background:' + c.cor + '">' + iniciais + '</div>' +
+               '</div>';
+        } else {
+          h += '<div class="nulo">NÚMERO ERRADO<br>VOTO NULO</div>';
+        }
+
+        h += '<div class="aviso">Aperte a tecla:<br>' +
+             '<b>CONFIRMA</b> para CONFIRMAR este voto<br>' +
+             '<b>CORRIGE</b> para REINICIAR este voto</div>';
+      }
+
+      tela.innerHTML = h;
+    }
+
+    /* ===== Ações da urna ===== */
+    function digitar(d) {
+      if (fim || branco || dig.length >= 2) return;
+      somTecla();
+      dig += d;
+      render();
+    }
+
+    function corrige() {
+      if (fim) return;
+      somCorrige();
+      dig = "";
+      branco = false;
+      render();
+    }
+
+    function votarBranco() {
+      if (fim) return;
+      if (dig.length > 0) return;
+      somTecla();
+      branco = true;
+      render();
+    }
+
+    function confirma() {
+      if (fim) return;
+
+      if (branco) {
+        votos.branco++;
+      } else if (dig.length === 2) {
+        if (cand()) votos[dig]++;
+        else votos.nulo++;
+      } else {
+        return;
+      }
+
+      salvar();
+      somConfirma();
+      fim = true;
+      render();
+
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        fim = false;
+        dig = "";
+        branco = false;
+        render();
+      }, 2600);
+    }
+
+    /* ===== Teclado na tela ===== */
+    const num = document.getElementById("num");
+
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].forEach(n => {
+      const b = document.createElement("button");
+      b.className = "k" + (n === 0 ? " z" : "");
+      b.textContent = n;
+      b.onclick = () => digitar(String(n));
+      num.appendChild(b);
+    });
+
+    document.getElementById("bBranco").onclick = votarBranco;
+    document.getElementById("bCorrige").onclick = corrige;
+    document.getElementById("bConfirma").onclick = confirma;
+
+    /* ===== Teclado do computador ===== */
+    document.addEventListener("keydown", e => {
+      if (ov.classList.contains("on")) {
+        if (e.key === "Escape") fecharPainel();
+        return;
+      }
+
+      if (cv.classList.contains("on")) {
+        if (e.key === "Escape") fecharCfg();
+        return;
+      }
+
+      if (/^[0-9]$/.test(e.key)) digitar(e.key);
+      else if (e.key === "Backspace" || e.key === "Delete") corrige();
+      else if (e.key === "Enter") confirma();
+      else if (e.key.toLowerCase() === "b") votarBranco();
+    });
+
+    /* ===== Painel de votos ===== */
+    const ov = document.getElementById("ov");
+
+    function abrirPainel() {
+      const total = Object.values(votos).reduce((a, b) => a + b, 0);
+      document.getElementById("total").textContent = "Total de votos: " + total;
+
+      const linhas = CANDS.map(c => ({
+        nome: c.n + " – " + c.nome,
+        v: votos[c.n],
+        cor: c.cor
+      }));
+
+      linhas.push(
+        { nome: "Brancos", v: votos.branco, cor: "#9aa5ae" },
+        { nome: "Nulos",   v: votos.nulo,   cor: "#6b7680" }
+      );
+
+      document.getElementById("lista").innerHTML = linhas.map(l => {
+        const p = total ? (l.v / total * 100) : 0;
+
+        return '<div class="lin">' +
+                 '<div class="t">' +
+                   '<span>' + l.nome + '</span>' +
+                   '<span><b>' + l.v + '</b> · ' + p.toFixed(1).replace(".", ",") + '%</span>' +
+                 '</div>' +
+                 '<div class="bar"><i style="width:' + p + '%;background:' + l.cor + '"></i></div>' +
+               '</div>';
+      }).join("");
+
+      ov.classList.add("on");
+    }
+
+    function fecharPainel() {
+      ov.classList.remove("on");
+    }
+
+    document.getElementById("verVotos").onclick = abrirPainel;
+    document.getElementById("fechar").onclick = fecharPainel;
+
+    ov.addEventListener("click", e => {
+      if (e.target === ov) fecharPainel();
+    });
+
+    document.getElementById("zerar").onclick = () => {
+      const z = document.getElementById("zerar");
+
+      if (!z.dataset.ok) {
+        z.dataset.ok = "1";
+        z.textContent = "Clique de novo para confirmar";
+        setTimeout(() => {
+          delete z.dataset.ok;
+          z.textContent = "Zerar votos";
+        }, 3000);
+        return;
+      }
+
+      delete z.dataset.ok;
+      z.textContent = "Zerar votos";
+
+      Object.keys(votos).forEach(k => votos[k] = 0);
+      salvar();
+      abrirPainel();
+    };
+
+    /* ===== Cadastro de candidatos ===== */
+    const cv = document.getElementById("cfg");
+
+    function limpa(s) {
+      return s.replace(/[<>&"]/g, "").trim();
+    }
+
+    function abrirCfg() {
+      desenharCfg();
+      cv.classList.add("on");
+    }
+
+    function fecharCfg() {
+      cv.classList.remove("on");
+      clearTimeout(timer);
+      fim = false;
+      dig = "";
+      branco = false;
+      render();
+    }
+
+    function desenharCfg() {
+      const lista = document.getElementById("cl");
+
+      if (!CANDS.length) {
+        lista.innerHTML = '<div class="sub">Nenhum candidato. Adicione abaixo.</div>';
+        return;
+      }
+
+      lista.innerHTML = CANDS.map((c, i) =>
+        '<div class="ci">' +
+          '<span class="cor" style="background:' + c.cor + '"></span>' +
+          '<div>' +
+            '<b>' + c.n + '</b> – ' + c.nome +
+            '<div class="pt">' + c.partido + '</div>' +
+          '</div>' +
+          '<button data-i="' + i + '">Remover</button>' +
+        '</div>'
+      ).join("");
+    }
+
+    // Botão que exige dois cliques para confirmar a ação
+    function duplo(btn, txt, fn) {
+      if (!btn.dataset.ok) {
+        btn.dataset.ok = "1";
+        btn.textContent = "Clique de novo para confirmar";
+        setTimeout(() => {
+          delete btn.dataset.ok;
+          btn.textContent = txt;
+        }, 3000);
+        return;
+      }
+
+      delete btn.dataset.ok;
+      btn.textContent = txt;
+      fn();
+    }
+
+    document.getElementById("cfgBtn").onclick = abrirCfg;
+    document.getElementById("fcfg").onclick = fecharCfg;
+
+    cv.addEventListener("click", e => {
+      if (e.target === cv) fecharCfg();
+    });
+
+    // Remover candidato
+    document.getElementById("cl").addEventListener("click", e => {
+      const i = e.target.dataset.i;
+      if (i === undefined) return;
+
+      const c = CANDS[+i];
+      delete votos[c.n];
+      CANDS.splice(+i, 1);
+
+      salvarC();
+      salvar();
+      desenharCfg();
+    });
+
+    // Adicionar candidato
+    document.getElementById("add").onclick = () => {
+      const n = document.getElementById("fn").value.trim();
+      const nome = limpa(document.getElementById("fnome").value);
+      const partido = limpa(document.getElementById("fpart").value);
+      const cor = document.getElementById("fcor").value;
+      const er = document.getElementById("err");
+
+      if (!/^\d{2}$/.test(n)) {
+        er.textContent = "O número precisa ter exatamente 2 dígitos.";
+        return;
+      }
+
+      if (!nome) {
+        er.textContent = "Digite o nome do candidato.";
+        return;
+      }
+
+      if (CANDS.some(c => c.n === n)) {
+        er.textContent = "Esse número já está em uso.";
+        return;
+      }
+
+      CANDS.push({ n, nome, partido: partido || "Sem partido", cor });
+      votos[n] = 0;
+
+      salvarC();
+      salvar();
+
+      document.getElementById("fn").value = "";
+      document.getElementById("fnome").value = "";
+      document.getElementById("fpart").value = "";
+      er.textContent = "";
+
+      desenharCfg();
+    };
+
+    // Restaurar candidatos padrão
+    document.getElementById("padrao").onclick = function () {
+      duplo(this, "Restaurar padrão (zera os votos)", () => {
+        CANDS = PADRAO.map(c => ({ ...c }));
+        votos = { branco: 0, nulo: 0 };
+        CANDS.forEach(c => votos[c.n] = 0);
+
+        salvarC();
+        salvar();
+        desenharCfg();
+      });
+    };
+
+    /* ===== Início ===== */
+    render();
+  </script>
+
+</body>
+</html>
